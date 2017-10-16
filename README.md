@@ -1,5 +1,7 @@
 # leanote
 
+This is a api library for [leanote](https://github.com/leanote/leanote)
+
 ## Requirements
 - Python 3
 - Requests
