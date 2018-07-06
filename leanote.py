@@ -172,6 +172,69 @@ class leanote(object):
             params.pop(key)
         r = json.loads(requests.post(url, params=params).text)
         return r
+    
+    # upload files
+    # Please refere to the lenaote api for the data structure of the Files and FileDatas 
+    def addNoteX(self, NotebookId="Necessary", Title="Necessary",
+                Content="Necessary", Tags=None, Abstract=None,
+                IsMarkdown=None, CreatedTime=None, UpdatedTime=None,
+                Files=None, FileDatas=None):
+        
+        url = self.baseUrl + "/api/note/addNote"
+        # url = "http://httpbin.org/post"
+
+        # prepare params
+        params_set = {
+            "token": self.token,
+        }
+
+        # prepare data
+        data_set = None
+        if Files is not None:
+            data_set = {
+                "NotebookId": NotebookId,
+                "Title": Title,
+                "Tags": Tags,
+                "Content": Content,
+                "Abstract": Abstract,
+                "IsMarkdown": IsMarkdown,
+                "CreatedTime": CreatedTime,
+                "UpdatedTime": UpdatedTime,
+            }
+            iFile = 0
+            for fileItem in Files:
+                for fileKey in fileItem:
+                    tempKey = 'Files[%d][%s]' % (iFile, fileKey)
+                    data_set[tempKey] = fileItem[fileKey],
+                # next file
+                iFile += 1
+            
+            # pop up none values
+            keyList = []
+            for key in data_set.keys():
+                if data_set[key] == None:
+                    keyList.append(key)
+            for key in keyList:
+                data_set.pop(key)
+        
+        # prepare files
+        files_set = None
+        if FileDatas is not None:
+            files_set = {}
+            for fileKey in FileDatas:
+                fileData = FileDatas[fileKey]
+                filesKey = 'FileDatas[' + fileKey + ']'
+                filePath = fileData["file_path"]
+                fileName = fileData["filename"]
+                files_set[filesKey] = (fileName, open(filePath, 'rb'))
+
+        response = None
+        if (files_set is not None) and (data_set is not None):
+            response = requests.post(url, params=params_set, data=data_set, files=files_set)
+        else:
+            response = requests.post(url, params=params_set)
+        r = json.loads(response.text)
+        return r
 
     # Maybe there is something wrong with files uploading, if yes, just don't
     # upload files
