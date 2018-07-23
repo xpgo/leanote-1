@@ -183,24 +183,48 @@ class leanote(object):
         url = self.baseUrl + "/api/note/addNote"
         # url = "http://httpbin.org/post"
 
-        # prepare params
+        # convert tags
+        allTags = {}
+        if Tags is not None:
+            iTag = 0
+            for aTag in Tags:
+                tagKey = 'Tags[%d]' % (iTag, )
+                allTags[tagKey] = aTag
+                iTag += 1
+
+        # prepare data for token
         params_set = {
             "token": self.token,
         }
 
-        # prepare data
-        data_set = None
+        # prepare form data
+        data_set = {
+            "NotebookId": NotebookId,
+            "Title": Title,
+            # "Tags": Tags,
+            "Content": Content,
+            "Abstract": Abstract,
+            "IsMarkdown": IsMarkdown,
+            "CreatedTime": CreatedTime,
+            "UpdatedTime": UpdatedTime,
+        }
+
+        # tags
+        # print Tags
+        # print u"New Note: " + Title
+        allTags = {}
+        if Tags is not None:
+            iTag = 0
+            for aTag in Tags:
+                tagKey = 'Tags[%d]' % (iTag, )
+                data_set[tagKey] = aTag
+                iTag += 1
+                # print tagKey + ": " + aTag
+        
+        # files
+        files_set = None
         if Files is not None:
-            data_set = {
-                "NotebookId": NotebookId,
-                "Title": Title,
-                "Tags": Tags,
-                "Content": Content,
-                "Abstract": Abstract,
-                "IsMarkdown": IsMarkdown,
-                "CreatedTime": CreatedTime,
-                "UpdatedTime": UpdatedTime,
-            }
+            # files 
             iFile = 0
             for fileItem in Files:
                 for fileKey in fileItem:
@@ -217,23 +241,27 @@ class leanote(object):
             for key in keyList:
                 data_set.pop(key)
         
-        # prepare files
-        files_set = None
-        if FileDatas is not None:
-            files_set = {}
-            for fileKey in FileDatas:
-                fileData = FileDatas[fileKey]
-                filesKey = 'FileDatas[' + fileKey + ']'
-                filePath = fileData["file_path"]
-                fileName = fileData["filename"]
-                files_set[filesKey] = (fileName, open(filePath, 'rb'))
+            # prepare files
+            if FileDatas is not None:
+                files_set = {}
+                for fileKey in FileDatas:
+                    fileData = FileDatas[fileKey]
+                    filesKey = 'FileDatas[' + fileKey + ']'
+                    filePath = fileData["file_path"]
+                    fileName = fileData["filename"]
+                    files_set[filesKey] = (fileName, open(filePath, 'rb'))
 
         response = None
-        if (files_set is not None) and (data_set is not None):
+        if (files_set is not None):
             response = requests.post(url, params=params_set, data=data_set, files=files_set)
         else:
-            response = requests.post(url, params=params_set)
-        r = json.loads(response.text)
+            response = requests.post(url, params=params_set, data=data_set)
+        # print response.text
+        r = None
+        try:
+            r = json.loads(response.text)
+        except ValueError, e:
+            print response.text
         return r
 
     # Maybe there is something wrong with files uploading, if yes, just don't
